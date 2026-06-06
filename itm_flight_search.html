@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>伊丹発 フライト検索</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ITM検索">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 15px; }
+
+  /* Header */
+  .header { background: #1a3a6b; color: white; padding: 14px 16px 10px; }
+  .header h1 { font-size: 17px; font-weight: 600; letter-spacing: 0.5px; }
+  .header p { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+  /* Region tabs */
+  .region-tabs { display: flex; background: #1a3a6b; padding: 0 16px; border-bottom: 2px solid #0d2450; }
+  .region-tab { flex: 1; text-align: center; padding: 9px 4px; font-size: 13px; color: rgba(255,255,255,0.6); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 500; }
+  .region-tab.active { color: white; border-bottom-color: #4da6ff; }
+
+  /* Form */
+  .form-section { background: white; padding: 14px 16px; border-bottom: 1px solid #e0e0e0; }
+  .form-row { margin-bottom: 12px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-label { font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .form-label span { color: #d94f3d; margin-left: 2px; }
+
+  select, input[type="date"], input[type="time"] {
+    width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px;
+    font-size: 15px; font-family: inherit; background: white; color: #1a1a1a;
+    appearance: none; -webkit-appearance: none;
+  }
+  select:focus, input:focus { outline: none; border-color: #1a3a6b; }
+
+  .time-condition { display: flex; gap: 8px; }
+  .time-condition select { flex: 1.2; }
+  .time-condition input { flex: 1; }
+
+  /* Search button */
+  .search-btn {
+    width: 100%; padding: 13px; background: #1a3a6b; color: white; border: none;
+    border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+    margin-top: 14px; letter-spacing: 0.5px; transition: background 0.2s;
+  }
+  .search-btn:active { background: #0d2450; }
+
+  /* Results */
+  .results { padding: 12px 16px; }
+  .results-header { font-size: 12px; color: #666; margin-bottom: 10px; padding: 8px 12px; background: #eef2f8; border-radius: 6px; }
+  .results-header strong { color: #1a3a6b; }
+
+  /* Flight card */
+  .flight-card { background: white; border-radius: 12px; margin-bottom: 10px; overflow: hidden; border: 1.5px solid #e8e8e8; }
+  .flight-card.best { border-color: #1a3a6b; }
+
+  .card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; border-bottom: 1px solid #f0f0f0; }
+  .airline-badge { display: flex; align-items: center; gap: 6px; }
+  .airline-logo { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; }
+  .jal-logo { background: #d70f24; }
+  .ana-logo { background: #0052a5; }
+  .airline-name { font-size: 13px; font-weight: 600; color: #333; }
+  .flight-num { font-size: 11px; color: #888; }
+  .best-badge { background: #1a3a6b; color: white; font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+
+  .card-timeline { padding: 12px 14px 10px; }
+  .timeline-row { display: flex; align-items: center; gap: 0; }
+  .tl-airport { text-align: center; min-width: 52px; }
+  .tl-code { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+  .tl-name { font-size: 10px; color: #888; margin-top: 1px; }
+  .tl-time { font-size: 22px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
+  .tl-line { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 6px; }
+  .tl-duration { font-size: 10px; color: #888; margin-bottom: 3px; }
+  .tl-arrow { display: flex; align-items: center; width: 100%; }
+  .tl-dot { width: 6px; height: 6px; border-radius: 50%; background: #1a3a6b; flex-shrink: 0; }
+  .tl-dash { flex: 1; height: 1.5px; background: #bbb; }
+  .tl-plane { font-size: 14px; color: #1a3a6b; flex-shrink: 0; margin: 0 2px; }
+
+  .via-badge { background: #fff3e0; color: #e65100; font-size: 10px; padding: 2px 7px; border-radius: 4px; margin-top: 4px; font-weight: 600; }
+
+  .card-footer { padding: 8px 14px 10px; border-top: 1px solid #f0f0f0; }
+  .biz-point { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: #555; line-height: 1.5; }
+  .biz-icon { color: #1a3a6b; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Recommendation box */
+  .recommend-box { background: #eef2f8; border-left: 4px solid #1a3a6b; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+  .recommend-title { font-size: 12px; font-weight: 700; color: #1a3a6b; margin-bottom: 5px; }
+  .recommend-text { font-size: 13px; color: #333; line-height: 1.6; }
+
+  /* No result */
+  .no-result { text-align: center; padding: 40px 20px; color: #888; font-size: 14px; }
+  .no-result .icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* Initial state */
+  .initial-msg { text-align: center; padding: 30px 20px; color: #888; font-size: 13px; line-height: 1.7; }
+  .initial-msg .icon { font-size: 40px; margin-bottom: 12px; }
+
+  .loading { text-align: center; padding: 30px; color: #1a3a6b; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✈ 伊丹発 フライト検索</h1>
+  <p>JAL / ANA 比較シミュレーター</p>
+</div>
+
+<div class="region-tabs">
+  <div class="region-tab active" onclick="switchRegion('tohoku')">東北方面</div>
+  <div class="region-tab" onclick="switchRegion('shikoku')">四国方面</div>
+</div>
+
+<div class="form-section">
+  <div class="form-row">
+    <div class="form-label">搭乗日 <span>*</span></div>
+    <input type="date" id="flightDate">
+  </div>
+  <div class="form-row">
+    <div class="form-label">目的地 <span>*</span></div>
+    <select id="destSelect"></select>
+  </div>
+  <div class="form-row">
+    <div class="form-label">希望条件 <span>*</span></div>
+    <div class="time-condition">
+      <select id="condType">
+        <option value="arrive_by">○時までに到着</option>
+        <option value="depart_after">○時以降に出発</option>
+      </select>
+      <select id="condTime"></select>
+    </div>
+  </div>
+  <button class="search-btn" onclick="searchFlights()">🔍 フライトを検索</button>
+</div>
+
+<div id="results">
+  <div class="initial-msg">
+    <div class="icon">🛫</div>
+    搭乗日・目的地・希望条件を選んで<br>「フライトを検索」を押してください
+  </div>
+</div>
+
+<script>
+const DESTINATIONS = {
+  tohoku: [
+    { code: 'SDJ', name: '仙台', label: '仙台空港 (SDJ)' },
+    { code: 'AOJ', name: '青森', label: '青森空港 (AOJ)' },
+    { code: 'MSW', name: '三沢', label: '三沢空港 (MSW)' },
+    { code: 'AXT', name: '秋田', label: '秋田空港 (AXT)' },
+    { code: 'HNA', name: '花巻', label: '花巻空港 (HNA)' },
+    { code: 'GAJ', name: '山形', label: '山形空港 (GAJ)' },
+    { code: 'ONX', name: '大館能代', label: '大館能代空港 (ONX)' },
+  ],
+  shikoku: [
+    { code: 'MYJ', name: '松山', label: '松山空港 (MYJ)' },
+    { code: 'TAK', name: '高松', label: '高松空港 (TAK)' },
+    { code: 'KCZ', name: '高知', label: '高知龍馬空港 (KCZ)' },
+    { code: 'TKS', name: '徳島', label: '徳島阿波おどり空港 (TKS)' },
+  ]
+};
+
+// 便スケジュールデータ（代表的な定期便をシミュレート）
+const SCHEDULES = {
+  SDJ: [
+    { airline:'JAL', num:'JAL2201', dep:'07:05', arr:'08:20', via:null, jal:true, biz:'午前の商談に最適。羽田乗継なし直行。' },
+    { airline:'ANA', num:'ANA737', dep:'07:35', arr:'08:50', via:null, jal:false, biz:'早朝便。出発前に空港ラウンジ利用可。' },
+    { airline:'JAL', num:'JAL2203', dep:'08:55', arr:'10:10', via:null, jal:true, biz:'午前の会議に対応できる到着時間。' },
+    { airline:'ANA', num:'ANA739', dep:'09:30', arr:'10:45', via:null, jal:false, biz:'機内Wi-Fi安定。午前中の業務継続可。' },
+    { airline:'JAL', num:'JAL2205', dep:'12:20', arr:'13:35', via:null, jal:true, biz:'昼便。午後商談向け。' },
+    { airline:'ANA', num:'ANA741', dep:'13:50', arr:'15:05', via:null, jal:false, biz:'午後の打ち合わせ後に宿入り可能。' },
+    { airline:'JAL', num:'JAL2207', dep:'17:40', arr:'18:55', via:null, jal:true, biz:'夕方便。翌日商談前泊向け。' },
+    { airline:'ANA', num:'ANA743', dep:'19:00', arr:'20:15', via:null, jal:false, biz:'最終便に近い。当日前泊での翌朝対応。' },
+  ],
+  AOJ: [
+    { airline:'JAL', num:'JAL2301', dep:'07:25', arr:'09:05', via:null, jal:true, biz:'J-AIR運航。青森早朝到着。' },
+    { airline:'JAL', num:'JAL2303', dep:'09:40', arr:'11:20', via:null, jal:true, biz:'午前中着。午後から商談スタート可。' },
+    { airline:'ANA', num:'ANA1891', dep:'10:10', arr:'11:55', via:'HND', jal:false, biz:'羽田乗継。ANA系列便。' },
+    { airline:'JAL', num:'JAL2305', dep:'14:10', arr:'15:50', via:null, jal:true, biz:'午後便。夕方から活動開始可。' },
+    { airline:'ANA', num:'ANA1893', dep:'16:30', arr:'18:15', via:'HND', jal:false, biz:'羽田乗継。前泊向き。' },
+  ],
+  MSW: [
+    { airline:'JAL', num:'JAL2451', dep:'08:00', arr:'10:00', via:'HND', jal:true, biz:'羽田乗継。三沢唯一のJAL系ルート。' },
+    { airline:'ANA', num:'ANA1931', dep:'08:30', arr:'10:35', via:'HND', jal:false, biz:'羽田乗継。ANA系便。' },
+    { airline:'JAL', num:'JAL2453', dep:'13:00', arr:'15:05', via:'HND', jal:true, biz:'午後便。夕方着予定。' },
+  ],
+  AXT: [
+    { airline:'JAL', num:'JAL2151', dep:'07:00', arr:'08:20', via:null, jal:true, biz:'J-AIR運航直行。早朝着。' },
+    { airline:'ANA', num:'ANA1651', dep:'08:05', arr:'09:25', via:null, jal:false, biz:'直行便。午前着で商談対応可。' },
+    { airline:'JAL', num:'JAL2153', dep:'11:55', arr:'13:15', via:null, jal:true, biz:'昼便。午後の打ち合わせに対応。' },
+    { airline:'ANA', num:'ANA1653', dep:'14:30', arr:'15:50', via:null, jal:false, biz:'午後便。夕方に到着。' },
+    { airline:'JAL', num:'JAL2155', dep:'17:20', arr:'18:40', via:null, jal:true, biz:'最終便。前泊に最適。' },
+  ],
+  HNA: [
+    { airline:'JAL', num:'JAL2051', dep:'07:40', arr:'09:10', via:null, jal:true, biz:'J-AIR直行。花巻最速着。' },
+    { airline:'ANA', num:'ANA1771', dep:'09:00', arr:'10:30', via:null, jal:false, biz:'直行便。午前商談対応可。' },
+    { airline:'JAL', num:'JAL2053', dep:'13:10', arr:'14:40', via:null, jal:true, biz:'午後到着。夕方の打ち合わせ向け。' },
+    { airline:'ANA', num:'ANA1773', dep:'16:00', arr:'17:30', via:null, jal:false, biz:'夕方便。前泊候補。' },
+  ],
+  GAJ: [
+    { airline:'ANA', num:'ANA1811', dep:'07:30', arr:'08:55', via:null, jal:false, biz:'ANA直行。山形早朝着。' },
+    { airline:'JAL', num:'JAL2601', dep:'09:50', arr:'11:20', via:'HND', jal:true, biz:'羽田乗継。JAL系ルート。' },
+    { airline:'ANA', num:'ANA1813', dep:'14:10', arr:'15:35', via:null, jal:false, biz:'直行午後便。' },
+  ],
+  ONX: [
+    { airline:'ANA', num:'ANA1871', dep:'08:20', arr:'10:15', via:'HND', jal:false, biz:'羽田乗継。大館能代唯一の路線。' },
+    { airline:'ANA', num:'ANA1873', dep:'14:00', arr:'15:55', via:'HND', jal:false, biz:'午後便。前泊向き。' },
+  ],
+  MYJ: [
+    { airline:'JAL', num:'JAL2401', dep:'07:10', arr:'08:05', via:null, jal:true, biz:'J-AIR直行。最速55分で松山着。' },
+    { airline:'ANA', num:'ANA671', dep:'07:45', arr:'08:40', via:null, jal:false, biz:'直行便。午前中の商談に最適。' },
+    { airline:'JAL', num:'JAL2403', dep:'09:10', arr:'10:05', via:null, jal:true, biz:'午前着。10時台から活動可能。' },
+    { airline:'ANA', num:'ANA673', dep:'10:30', arr:'11:25', via:null, jal:false, biz:'機内Wi-Fi対応。午前中業務継続可。' },
+    { airline:'JAL', num:'JAL2405', dep:'13:25', arr:'14:20', via:null, jal:true, biz:'昼便。午後商談向け。' },
+    { airline:'ANA', num:'ANA675', dep:'15:10', arr:'16:05', via:null, jal:false, biz:'夕方前着。夜の会食前に余裕あり。' },
+    { airline:'JAL', num:'JAL2407', dep:'17:55', arr:'18:50', via:null, jal:true, biz:'夕方便。翌日商談の前泊に最適。' },
+    { airline:'ANA', num:'ANA677', dep:'19:20', arr:'20:15', via:null, jal:false, biz:'最終便。当日前泊での翌朝対応。' },
+  ],
+  TAK: [
+    { airline:'JAL', num:'JAL2351', dep:'07:30', arr:'08:20', via:null, jal:true, biz:'J-AIR直行50分。最速着。' },
+    { airline:'ANA', num:'ANA651', dep:'08:10', arr:'09:00', via:null, jal:false, biz:'直行便。午前商談に対応。' },
+    { airline:'JAL', num:'JAL2353', dep:'10:40', arr:'11:30', via:null, jal:true, biz:'午前中着。昼前から活動可能。' },
+    { airline:'ANA', num:'ANA653', dep:'13:00', arr:'13:50', via:null, jal:false, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'JAL', num:'JAL2355', dep:'16:30', arr:'17:20', via:null, jal:true, biz:'夕方便。前泊向け。' },
+    { airline:'ANA', num:'ANA655', dep:'18:30', arr:'19:20', via:null, jal:false, biz:'最終便。翌朝商談の前泊に最適。' },
+  ],
+  KCZ: [
+    { airline:'JAL', num:'JAL2551', dep:'07:20', arr:'08:15', via:null, jal:true, biz:'J-AIR直行。早朝高知着。' },
+    { airline:'ANA', num:'ANA691', dep:'08:00', arr:'08:55', via:null, jal:false, biz:'直行便。午前活動に対応。' },
+    { airline:'JAL', num:'JAL2553', dep:'11:15', arr:'12:10', via:null, jal:true, biz:'昼前着。午後商談向け。' },
+    { airline:'ANA', num:'ANA693', dep:'14:30', arr:'15:25', via:null, jal:false, biz:'午後便。夕方着。' },
+    { airline:'JAL', num:'JAL2555', dep:'17:50', arr:'18:45', via:null, jal:true, biz:'夕方最終。前泊に最適。' },
+  ],
+  TKS: [
+    { airline:'JAL', num:'JAL2501', dep:'07:45', arr:'08:30', via:null, jal:true, biz:'J-AIR直行45分。最速着。' },
+    { airline:'ANA', num:'ANA661', dep:'09:00', arr:'09:45', via:null, jal:false, biz:'直行便。午前商談対応可。' },
+    { airline:'JAL', num:'JAL2503', dep:'12:30', arr:'13:15', via:null, jal:true, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'ANA', num:'ANA663', dep:'16:00', arr:'16:45', via:null, jal:false, biz:'夕方便。夜の会食前に余裕あり。' },
+    { airline:'JAL', num:'JAL2505', dep:'18:20', arr:'19:05', via:null, jal:true, biz:'最終便。当日前泊向け。' },
+  ],
+};
+
+let currentRegion = 'tohoku';
+
+function switchRegion(region) {
+  currentRegion = region;
+  document.querySelectorAll('.region-tab').forEach((t,i) => {
+    t.classList.toggle('active', (region==='tohoku'&&i===0)||(region==='shikoku'&&i===1));
+  });
+  updateDestOptions();
+  document.getElementById('results').innerHTML = '<div class="initial-msg"><div class="icon">🛫</div>目的地を選んで検索してください</div>';
+}
+
+function updateDestOptions() {
+  const sel = document.getElementById('destSelect');
+  sel.innerHTML = DESTINATIONS[currentRegion].map(d =>
+    `<option value="${d.code}">${d.label}</option>`
+  ).join('');
+}
+
+function toMins(t) {
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+
+function formatDate(d) {
+  if(!d) return '';
+  const dt = new Date(d);
+  return `${dt.getMonth()+1}月${dt.getDate()}日`;
+}
+
+function getDayOfWeek(d) {
+  if(!d) return '';
+  const days = ['日','月','火','水','木','金','土'];
+  return days[new Date(d).getDay()];
+}
+
+function searchFlights() {
+  const date = document.getElementById('flightDate').value;
+  const dest = document.getElementById('destSelect').value;
+  const condType = document.getElementById('condType').value;
+  const condTime = document.getElementById('condTime').value;
+
+  if(!date || !dest || !condTime) {
+    alert('搭乗日・目的地・希望時刻をすべて入力してください。');
+    return;
+  }
+
+  const destInfo = DESTINATIONS[currentRegion].find(d => d.code === dest);
+  const allFlights = SCHEDULES[dest] || [];
+  const condMins = toMins(condTime);
+
+  let filtered;
+  if(condType === 'arrive_by') {
+    filtered = allFlights.filter(f => toMins(f.arr) <= condMins);
+    filtered.sort((a,b) => toMins(b.arr) - toMins(a.arr));
+  } else {
+    filtered = allFlights.filter(f => toMins(f.dep) >= condMins);
+    filtered.sort((a,b) => toMins(a.dep) - toMins(b.dep));
+  }
+
+  const condLabel = condType === 'arrive_by'
+    ? `${condTime}までに到着`
+    : `${condTime}以降に出発`;
+
+  const resultsDiv = document.getElementById('results');
+
+  if(filtered.length === 0) {
+    resultsDiv.innerHTML = `
+      <div class="results-header">
+        <strong>${formatDate(date)}（${getDayOfWeek(date)}）</strong> 伊丹 → ${destInfo.name}（${condLabel}）
+      </div>
+      <div class="no-result">
+        <div class="icon">😔</div>
+        条件に合う便が見つかりませんでした。<br>条件を変更して再度お試しください。
+      </div>`;
+    return;
+  }
+
+  const best = filtered[0];
+  const candidates = filtered.slice(0, 4);
+
+  const condLabel2 = condType === 'arrive_by' ? '到着' : '出発';
+  const bestAirline = best.airline;
+  const bestReason = condType === 'arrive_by'
+    ? `${condTime}の到着希望に対し、最も遅れずに${best.arr}に到着できるため`
+    : `${condTime}以降で最も早く${best.dep}に出発できるため`;
+
+  let html = `
+    <div class="results" id="results-inner">
+      <div class="results-header">
+        <strong>${formatDate(date)}（${getDayOfWeek(date)}）伊丹 → ${destInfo.name}</strong>（${condLabel}）<br>
+        ${filtered.length}便が該当 · 上位${candidates.length}便を表示
+      </div>
+
+      <div class="recommend-box">
+        <div class="recommend-title">🏆 判定・おすすめ</div>
+        <div class="recommend-text">
+          今回の出張には、<strong>${bestAirline} ${best.num}</strong> が最もおすすめです。<br>
+          ${bestReason}${best.via ? '（羽田乗継）' : '（直行）'}です。
+        </div>
+      </div>`;
+
+  candidates.forEach((f, i) => {
+    const isBest = i === 0;
+    const depM = toMins(f.arr) - toMins(f.dep);
+    const isJAL = f.jal;
+    html += `
+      <div class="flight-card${isBest ? ' best' : ''}">
+        <div class="card-header">
+          <div class="airline-badge">
+            <div class="airline-logo ${isJAL ? 'jal-logo' : 'ana-logo'}">${isJAL ? 'J' : 'A'}</div>
+            <div>
+              <div class="airline-name">${f.airline}</div>
+              <div class="flight-num">${f.num}</div>
+            </div>
+          </div>
+          ${isBest ? '<span class="best-badge">✓ 最適</span>' : `<span style="font-size:12px;color:#999;">候補${i+1}</span>`}
+        </div>
+        <div class="card-timeline">
+          <div class="timeline-row">
+            <div class="tl-airport">
+              <div class="tl-time">${f.dep}</div>
+              <div class="tl-code">ITM</div>
+              <div class="tl-name">伊丹</div>
+            </div>
+            <div class="tl-line">
+              <div class="tl-duration">約${depM}分${f.via ? ' (乗継)' : ' 直行'}</div>
+              <div class="tl-arrow">
+                <div class="tl-dot"></div>
+                <div class="tl-dash"></div>
+                <div class="tl-plane">✈</div>
+                <div class="tl-dash"></div>
+                <div class="tl-dot"></div>
+              </div>
+              ${f.via ? `<div class="via-badge">経由: ${f.via}</div>` : ''}
+            </div>
+            <div class="tl-airport">
+              <div class="tl-time">${f.arr}</div>
+              <div class="tl-code">${dest}</div>
+              <div class="tl-name">${destInfo.name}</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="biz-point">
+            <span class="biz-icon">💼</span>
+            <span>${f.biz}</span>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  html += `</div>`;
+  resultsDiv.innerHTML = html;
+  resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// 時刻セレクト（15分刻み）初期化
+function buildTimeSelect(defaultTime) {
+  const sel = document.getElementById('condTime');
+  sel.innerHTML = '';
+  for(let h = 0; h < 24; h++) {
+    for(let m of [0, 15, 30, 45]) {
+      const hh = String(h).padStart(2,'0');
+      const mm2 = String(m).padStart(2,'0');
+      const val = `${hh}:${mm2}`;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      if(val === defaultTime) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+}
+
+// 初期化
+updateDestOptions();
+buildTimeSelect('10:00');
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth()+1).padStart(2,'0');
+const dd = String(today.getDate()).padStart(2,'0');
+document.getElementById('flightDate').value = `${yyyy}-${mm}-${dd}`;
+// Service Worker 登録
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "伊丹発フライト検索",
+  "short_name": "ITM検索",
+  "description": "伊丹空港発 JAL/ANA フライト比較シミュレーター",
+  "start_url": "./itm_flight_search.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a3a6b",
+  "theme_color": "#1a3a6b",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
