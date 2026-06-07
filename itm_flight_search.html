@@ -112,8 +112,9 @@
 </div>
 
 <div class="region-tabs">
-  <div class="region-tab active" onclick="switchRegion('tohoku')">東北方面</div>
-  <div class="region-tab" onclick="switchRegion('shikoku')">四国方面</div>
+  <div class="region-tab active" onclick="switchRegion('tohoku')">東北</div>
+  <div class="region-tab" onclick="switchRegion('shikoku')">四国</div>
+  <div class="region-tab" onclick="switchRegion('niigata')">新潟</div>
 </div>
 
 <div class="form-section">
@@ -150,97 +151,86 @@ const DESTINATIONS = {
   tohoku: [
     { code: 'SDJ', name: '仙台', label: '仙台空港 (SDJ)' },
     { code: 'AOJ', name: '青森', label: '青森空港 (AOJ)' },
-    { code: 'MSW', name: '三沢', label: '三沢空港 (MSW)' },
+    { code: 'MSJ', name: '三沢', label: '三沢空港 (MSJ)' },
     { code: 'AXT', name: '秋田', label: '秋田空港 (AXT)' },
     { code: 'HNA', name: '花巻', label: '花巻空港 (HNA)' },
     { code: 'GAJ', name: '山形', label: '山形空港 (GAJ)' },
-    { code: 'ONX', name: '大館能代', label: '大館能代空港 (ONX)' },
   ],
   shikoku: [
     { code: 'MYJ', name: '松山', label: '松山空港 (MYJ)' },
     { code: 'TAK', name: '高松', label: '高松空港 (TAK)' },
-    { code: 'KCZ', name: '高知', label: '高知龍馬空港 (KCZ)' },
-    { code: 'TKS', name: '徳島', label: '徳島阿波おどり空港 (TKS)' },
+  ],
+  niigata: [
+    { code: 'KIJ', name: '新潟', label: '新潟空港 (KIJ)' },
   ]
 };
 
-// 便スケジュールデータ（代表的な定期便をシミュレート）
 const SCHEDULES = {
   SDJ: [
-    { airline:'JAL', num:'JAL2201', dep:'07:05', arr:'08:20', via:null, jal:true, biz:'午前の商談に最適。羽田乗継なし直行。' },
-    { airline:'ANA', num:'ANA737', dep:'07:35', arr:'08:50', via:null, jal:false, biz:'早朝便。出発前に空港ラウンジ利用可。' },
-    { airline:'JAL', num:'JAL2203', dep:'08:55', arr:'10:10', via:null, jal:true, biz:'午前の会議に対応できる到着時間。' },
-    { airline:'ANA', num:'ANA739', dep:'09:30', arr:'10:45', via:null, jal:false, biz:'機内Wi-Fi安定。午前中の業務継続可。' },
-    { airline:'JAL', num:'JAL2205', dep:'12:20', arr:'13:35', via:null, jal:true, biz:'昼便。午後商談向け。' },
-    { airline:'ANA', num:'ANA741', dep:'13:50', arr:'15:05', via:null, jal:false, biz:'午後の打ち合わせ後に宿入り可能。' },
-    { airline:'JAL', num:'JAL2207', dep:'17:40', arr:'18:55', via:null, jal:true, biz:'夕方便。翌日商談前泊向け。' },
-    { airline:'ANA', num:'ANA743', dep:'19:00', arr:'20:15', via:null, jal:false, biz:'最終便に近い。当日前泊での翌朝対応。' },
+    { airline:'JAL', num:'JAL2201', dep:'07:10', arr:'08:30', via:null, jal:true, biz:'最早便。午前の商談に最適。直行。' },
+    { airline:'ANA', num:'NH731',   dep:'07:50', arr:'09:05', via:null, jal:false, biz:'早朝便。空港ラウンジ利用可。' },
+    { airline:'JAL', num:'JAL2203', dep:'09:30', arr:'10:40', via:null, jal:true, biz:'午前中着。午前商談対応可。' },
+    { airline:'ANA', num:'NH733',   dep:'09:55', arr:'11:10', via:null, jal:false, biz:'午前便。昼前到着。' },
+    { airline:'JAL', num:'JAL2205', dep:'11:00', arr:'12:15', via:null, jal:true, biz:'昼前着。午後商談向け。' },
+    { airline:'ANA', num:'NH735',   dep:'12:35', arr:'14:00', via:null, jal:false, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'JAL', num:'JAL2207', dep:'13:50', arr:'15:00', via:null, jal:true, biz:'午後便。夕方から活動可能。' },
+    { airline:'ANA', num:'NH3151',  dep:'14:15', arr:'15:25', via:null, jal:false, biz:'IBEX運航。午後着。' },
+    { airline:'JAL', num:'JAL2209', dep:'15:30', arr:'16:40', via:null, jal:true, biz:'夕方前着。前泊候補。' },
+    { airline:'ANA', num:'NH3153',  dep:'15:40', arr:'16:50', via:null, jal:false, biz:'IBEX運航。夕方着。' },
+    { airline:'JAL', num:'JAL2213', dep:'17:15', arr:'18:30', via:null, jal:true, biz:'夕方便。翌日商談の前泊に最適。' },
+    { airline:'ANA', num:'NH737',   dep:'16:50', arr:'18:05', via:null, jal:false, biz:'夕方便。前泊向け。' },
+    { airline:'JAL', num:'JAL2217', dep:'19:50', arr:'21:05', via:null, jal:true, biz:'最終便。当日前泊向け。' },
+    { airline:'ANA', num:'NH739',   dep:'19:40', arr:'21:00', via:null, jal:false, biz:'最終便。翌朝商談の前泊に。' },
   ],
   AOJ: [
-    { airline:'JAL', num:'JAL2301', dep:'07:25', arr:'09:05', via:null, jal:true, biz:'J-AIR運航。青森早朝到着。' },
-    { airline:'JAL', num:'JAL2303', dep:'09:40', arr:'11:20', via:null, jal:true, biz:'午前中着。午後から商談スタート可。' },
-    { airline:'ANA', num:'ANA1891', dep:'10:10', arr:'11:55', via:'HND', jal:false, biz:'羽田乗継。ANA系列便。' },
-    { airline:'JAL', num:'JAL2305', dep:'14:10', arr:'15:50', via:null, jal:true, biz:'午後便。夕方から活動開始可。' },
-    { airline:'ANA', num:'ANA1893', dep:'16:30', arr:'18:15', via:'HND', jal:false, biz:'羽田乗継。前泊向き。' },
+    { airline:'JAL', num:'JAL2151', dep:'07:45', arr:'09:20', via:null, jal:true, biz:'早朝直行。午前着で商談対応可。' },
+    { airline:'ANA', num:'NH1851',  dep:'09:00', arr:'10:40', via:null, jal:false, biz:'直行便。午前商談に対応。' },
+    { airline:'JAL', num:'JAL2153', dep:'12:05', arr:'13:30', via:null, jal:true, biz:'昼便。午後から活動開始可。' },
+    { airline:'ANA', num:'NH1853',  dep:'14:10', arr:'15:50', via:null, jal:false, biz:'午後便。夕方着。前泊向け。' },
+    { airline:'JAL', num:'JAL2157', dep:'16:50', arr:'18:15', via:null, jal:true, biz:'夕方便。翌日商談の前泊に最適。' },
+    { airline:'ANA', num:'NH1855',  dep:'18:35', arr:'20:15', via:null, jal:false, biz:'最終便。当日前泊向け。' },
   ],
-  MSW: [
-    { airline:'JAL', num:'JAL2451', dep:'08:00', arr:'10:00', via:'HND', jal:true, biz:'羽田乗継。三沢唯一のJAL系ルート。' },
-    { airline:'ANA', num:'ANA1931', dep:'08:30', arr:'10:35', via:'HND', jal:false, biz:'羽田乗継。ANA系便。' },
-    { airline:'JAL', num:'JAL2453', dep:'13:00', arr:'15:05', via:'HND', jal:true, biz:'午後便。夕方着予定。' },
+  MSJ: [
+    { airline:'JAL', num:'JAL2161', dep:'09:15', arr:'10:50', via:null, jal:true, biz:'JAL直行。午前着で商談対応可。' },
+    { airline:'JAL', num:'JAL2163', dep:'15:45', arr:'17:15', via:null, jal:true, biz:'夕方便。翌日商談の前泊に最適。' },
   ],
   AXT: [
-    { airline:'JAL', num:'JAL2151', dep:'07:00', arr:'08:20', via:null, jal:true, biz:'J-AIR運航直行。早朝着。' },
-    { airline:'ANA', num:'ANA1651', dep:'08:05', arr:'09:25', via:null, jal:false, biz:'直行便。午前着で商談対応可。' },
-    { airline:'JAL', num:'JAL2153', dep:'11:55', arr:'13:15', via:null, jal:true, biz:'昼便。午後の打ち合わせに対応。' },
-    { airline:'ANA', num:'ANA1653', dep:'14:30', arr:'15:50', via:null, jal:false, biz:'午後便。夕方に到着。' },
-    { airline:'JAL', num:'JAL2155', dep:'17:20', arr:'18:40', via:null, jal:true, biz:'最終便。前泊に最適。' },
+    { airline:'JAL', num:'JAL2171', dep:'07:55', arr:'09:10', via:null, jal:true, biz:'早朝直行。午前商談に最適。' },
+    { airline:'ANA', num:'NH1851',  dep:'09:00', arr:'10:40', via:null, jal:false, biz:'直行便。午前着。' },
+    { airline:'JAL', num:'JAL2173', dep:'12:20', arr:'13:35', via:null, jal:true, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'ANA', num:'NH1853',  dep:'14:10', arr:'15:50', via:null, jal:false, biz:'午後便。夕方着。' },
+    { airline:'JAL', num:'JAL2179', dep:'16:30', arr:'17:45', via:null, jal:true, biz:'夕方便。前泊に最適。' },
+    { airline:'ANA', num:'NH1855',  dep:'18:35', arr:'20:15', via:null, jal:false, biz:'最終便。当日前泊向け。' },
   ],
   HNA: [
-    { airline:'JAL', num:'JAL2051', dep:'07:40', arr:'09:10', via:null, jal:true, biz:'J-AIR直行。花巻最速着。' },
-    { airline:'ANA', num:'ANA1771', dep:'09:00', arr:'10:30', via:null, jal:false, biz:'直行便。午前商談対応可。' },
-    { airline:'JAL', num:'JAL2053', dep:'13:10', arr:'14:40', via:null, jal:true, biz:'午後到着。夕方の打ち合わせ向け。' },
-    { airline:'ANA', num:'ANA1773', dep:'16:00', arr:'17:30', via:null, jal:false, biz:'夕方便。前泊候補。' },
+    { airline:'JAL', num:'JAL2181', dep:'07:25', arr:'08:50', via:null, jal:true, biz:'早朝直行。花巻最速着。午前商談可。' },
+    { airline:'JAL', num:'JAL2183', dep:'11:45', arr:'13:00', via:null, jal:true, biz:'昼便。午後から活動開始可。' },
+    { airline:'JAL', num:'JAL2185', dep:'13:45', arr:'15:00', via:null, jal:true, biz:'午後便。夕方の打ち合わせ向け。' },
   ],
   GAJ: [
-    { airline:'ANA', num:'ANA1811', dep:'07:30', arr:'08:55', via:null, jal:false, biz:'ANA直行。山形早朝着。' },
-    { airline:'JAL', num:'JAL2601', dep:'09:50', arr:'11:20', via:'HND', jal:true, biz:'羽田乗継。JAL系ルート。' },
-    { airline:'ANA', num:'ANA1813', dep:'14:10', arr:'15:35', via:null, jal:false, biz:'直行午後便。' },
-  ],
-  ONX: [
-    { airline:'ANA', num:'ANA1871', dep:'08:20', arr:'10:15', via:'HND', jal:false, biz:'羽田乗継。大館能代唯一の路線。' },
-    { airline:'ANA', num:'ANA1873', dep:'14:00', arr:'15:55', via:'HND', jal:false, biz:'午後便。前泊向き。' },
+    { airline:'JAL', num:'JAL2233', dep:'08:00', arr:'09:15', via:null, jal:true, biz:'早朝直行。午前商談に最適。' },
+    { airline:'JAL', num:'JAL2235', dep:'13:15', arr:'14:25', via:null, jal:true, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'JAL', num:'JAL2237', dep:'16:20', arr:'17:30', via:null, jal:true, biz:'夕方便。前泊に最適。' },
   ],
   MYJ: [
-    { airline:'JAL', num:'JAL2401', dep:'07:10', arr:'08:05', via:null, jal:true, biz:'J-AIR直行。最速55分で松山着。' },
-    { airline:'ANA', num:'ANA671', dep:'07:45', arr:'08:40', via:null, jal:false, biz:'直行便。午前中の商談に最適。' },
-    { airline:'JAL', num:'JAL2403', dep:'09:10', arr:'10:05', via:null, jal:true, biz:'午前着。10時台から活動可能。' },
-    { airline:'ANA', num:'ANA673', dep:'10:30', arr:'11:25', via:null, jal:false, biz:'機内Wi-Fi対応。午前中業務継続可。' },
-    { airline:'JAL', num:'JAL2405', dep:'13:25', arr:'14:20', via:null, jal:true, biz:'昼便。午後商談向け。' },
-    { airline:'ANA', num:'ANA675', dep:'15:10', arr:'16:05', via:null, jal:false, biz:'夕方前着。夜の会食前に余裕あり。' },
-    { airline:'JAL', num:'JAL2407', dep:'17:55', arr:'18:50', via:null, jal:true, biz:'夕方便。翌日商談の前泊に最適。' },
-    { airline:'ANA', num:'ANA677', dep:'19:20', arr:'20:15', via:null, jal:false, biz:'最終便。当日前泊での翌朝対応。' },
+    { airline:'ANA', num:'NH1695',  dep:'07:50', arr:'08:55', via:null, jal:false, biz:'早朝直行。午前商談に最適。' },
+    { airline:'ANA', num:'NH3179',  dep:'11:00', arr:'12:05', via:null, jal:false, biz:'IBEX運航。昼前着。午後商談向け。' },
+    { airline:'ANA', num:'NH3181',  dep:'16:55', arr:'18:00', via:null, jal:false, biz:'IBEX運航。夕方便。前泊に最適。' },
   ],
   TAK: [
-    { airline:'JAL', num:'JAL2351', dep:'07:30', arr:'08:20', via:null, jal:true, biz:'J-AIR直行50分。最速着。' },
-    { airline:'ANA', num:'ANA651', dep:'08:10', arr:'09:00', via:null, jal:false, biz:'直行便。午前商談に対応。' },
-    { airline:'JAL', num:'JAL2353', dep:'10:40', arr:'11:30', via:null, jal:true, biz:'午前中着。昼前から活動可能。' },
-    { airline:'ANA', num:'ANA653', dep:'13:00', arr:'13:50', via:null, jal:false, biz:'昼便。午後打ち合わせ向け。' },
-    { airline:'JAL', num:'JAL2355', dep:'16:30', arr:'17:20', via:null, jal:true, biz:'夕方便。前泊向け。' },
-    { airline:'ANA', num:'ANA655', dep:'18:30', arr:'19:20', via:null, jal:false, biz:'最終便。翌朝商談の前泊に最適。' },
+    { airline:'ANA', num:'NH1633',  dep:'07:10', arr:'08:00', via:null, jal:false, biz:'最早便。50分直行。午前商談に最適。' },
+    { airline:'ANA', num:'NH1635',  dep:'09:00', arr:'09:50', via:null, jal:false, biz:'午前便。50分直行。午前中から活動可。' },
+    { airline:'ANA', num:'NH1639',  dep:'10:35', arr:'11:25', via:null, jal:false, biz:'午前便。昼前着。午後商談向け。' },
+    { airline:'ANA', num:'NH1641',  dep:'13:20', arr:'14:10', via:null, jal:false, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'ANA', num:'NH1643',  dep:'15:50', arr:'16:40', via:null, jal:false, biz:'夕方前着。夜の会食前に余裕あり。' },
+    { airline:'ANA', num:'NH1645',  dep:'16:35', arr:'17:25', via:null, jal:false, biz:'夕方便。前泊向け。' },
+    { airline:'ANA', num:'NH1647',  dep:'18:05', arr:'18:55', via:null, jal:false, biz:'夜便。当日前泊に最適。' },
+    { airline:'ANA', num:'NH1649',  dep:'20:15', arr:'21:10', via:null, jal:false, biz:'最終便。翌朝商談の前泊に。' },
   ],
-  KCZ: [
-    { airline:'JAL', num:'JAL2551', dep:'07:20', arr:'08:15', via:null, jal:true, biz:'J-AIR直行。早朝高知着。' },
-    { airline:'ANA', num:'ANA691', dep:'08:00', arr:'08:55', via:null, jal:false, biz:'直行便。午前活動に対応。' },
-    { airline:'JAL', num:'JAL2553', dep:'11:15', arr:'12:10', via:null, jal:true, biz:'昼前着。午後商談向け。' },
-    { airline:'ANA', num:'ANA693', dep:'14:30', arr:'15:25', via:null, jal:false, biz:'午後便。夕方着。' },
-    { airline:'JAL', num:'JAL2555', dep:'17:50', arr:'18:45', via:null, jal:true, biz:'夕方最終。前泊に最適。' },
-  ],
-  TKS: [
-    { airline:'JAL', num:'JAL2501', dep:'07:45', arr:'08:30', via:null, jal:true, biz:'J-AIR直行45分。最速着。' },
-    { airline:'ANA', num:'ANA661', dep:'09:00', arr:'09:45', via:null, jal:false, biz:'直行便。午前商談対応可。' },
-    { airline:'JAL', num:'JAL2503', dep:'12:30', arr:'13:15', via:null, jal:true, biz:'昼便。午後打ち合わせ向け。' },
-    { airline:'ANA', num:'ANA663', dep:'16:00', arr:'16:45', via:null, jal:false, biz:'夕方便。夜の会食前に余裕あり。' },
-    { airline:'JAL', num:'JAL2505', dep:'18:20', arr:'19:05', via:null, jal:true, biz:'最終便。当日前泊向け。' },
+  KIJ: [
+    { airline:'ANA', num:'NH1651',  dep:'08:00', arr:'09:25', via:null, jal:false, biz:'早朝直行。午前商談に最適。' },
+    { airline:'ANA', num:'NH1653',  dep:'12:35', arr:'14:05', via:null, jal:false, biz:'昼便。午後打ち合わせ向け。' },
+    { airline:'ANA', num:'NH1655',  dep:'19:15', arr:'20:45', via:null, jal:false, biz:'夜便。翌朝商談の前泊に最適。' },
   ],
 };
 
@@ -248,8 +238,9 @@ let currentRegion = 'tohoku';
 
 function switchRegion(region) {
   currentRegion = region;
+  const regions = ['tohoku','shikoku','niigata'];
   document.querySelectorAll('.region-tab').forEach((t,i) => {
-    t.classList.toggle('active', (region==='tohoku'&&i===0)||(region==='shikoku'&&i===1));
+    t.classList.toggle('active', regions[i] === region);
   });
   updateDestOptions();
   document.getElementById('results').innerHTML = '<div class="initial-msg"><div class="icon">🛫</div>目的地を選んで検索してください</div>';
